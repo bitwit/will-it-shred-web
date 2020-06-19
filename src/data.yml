@@ -1,0 +1,14 @@
+shredders:
+  - title: Shredder V2
+    speedRatings:
+      tooLow: 0
+      low: 10
+      good: 50
+      high: 120
+      tooHigh: 200	
+    torqueRatings:
+      tooLow: 0
+      low: 60
+      good: 110
+      high: 250
+      tooHigh: 400

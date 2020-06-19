@@ -1,18 +1,24 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
+    <ShredderCalculator :inputData="inputData" />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import HelloWorld from './components/HelloWorld.vue';
+import ShredderCalculator from './components/ShredderCalculator.vue';
+import { InputData } from './DataStructure'
+const inputData = require("./data.yml") as InputData
 
 export default Vue.extend({
   name: 'App',
   components: {
-    HelloWorld
+    ShredderCalculator
+  },
+  data: function() {
+    return {
+      inputData: inputData.shredders[0]
+    }
   }
 });
 </script>
@@ -22,7 +28,6 @@ export default Vue.extend({
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
   margin-top: 60px;
 }
