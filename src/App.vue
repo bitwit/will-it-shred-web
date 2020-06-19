@@ -1,6 +1,12 @@
 <template>
   <div id="app">
-    <ShredderCalculator :inputData="inputData" />
+    <div class="container">
+      <h1>
+        <img class="logo" src="./assets/community-logo.svg" />
+        <span>Will It Shred?</span>
+      </h1>
+      <ShredderCalculator :inputData="inputData" />
+    </div>
   </div>
 </template>
 
@@ -30,5 +36,21 @@ export default Vue.extend({
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+div.container {
+  width: 640pt;
+  margin: 0 auto;
+}
+
+h1 {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+img.logo {
+  display: block;
+  width: 100pt;
 }
 </style>

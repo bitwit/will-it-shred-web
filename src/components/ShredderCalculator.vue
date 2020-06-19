@@ -1,38 +1,76 @@
 <template>
-  <div class="container">
-    <h1>Will It Shred?</h1>
-
-    <p>Picking the right motor for your Precious Plastic Shredder can be tricky</p>
-    <p>Use this calculator to help find out if that motor/gearing combination you are considering will shred within your expectations</p>
-
+  <div class="calculator-container">
     <div class="calculator">
       <section class="inputs">
+        <h2>{{shredderInputData.title}} Calculator</h2>
         <h3>⚡️ Motor</h3>
-        <label for="rpm">RPM</label>
-        <input type="text" name="rpm" v-model="motor.rpm" />
-        <br />
-        <label for="hz">Mains Freq. Hz</label>
-        <p class="input-hint">Normally 50 or 60</p>
-        <input type="text" name="hz" v-model="motor.hz" />
-        <label for="poles">No. Poles</label>
-        <p class="input-hint">An even number such as 2 or 4</p>
-        <input type="text" name="poles" v-model="motor.poles" />
-        <br />
-        <label for="kilowatts">Power, KW</label>
-        <input type="text" name="kilowatts" v-model="motor.kilowatts" />
-        <label for="watts">or W</label>
-        <input type="text" name="watts" v-model="motor.watts" />
-        <br />
-        <label for="volts">Voltage V</label>
-        <input type="text" name="volts" v-model="motor.volts" />
-        <label for="amps">Current Amps/A/I</label>
-        <input type="text" name="amps" v-model="motor.amps" />
+        <div class="type-container">
+          <div class="type-headings">
+            <h5>Speed</h5>
+            <select v-model="rpmType" @change="rpmTypeChanged()">
+              <option value="rpm" selected>RPM</option>
+              <option value="hzpoles">Hz &amp; Poles</option>
+            </select>
+          </div>
+          <div class="type-inputs">
+            <div class="rpm-input" v-if="rpmType == 'rpm'">
+              <input type="text" name="rpm" v-model="motor.rpm" />
+              <label for="rpm">RPM</label>
+            </div>
+            <div class="hz-poles-input" v-if="rpmType == 'hzpoles'">
+              <input type="text" name="hz" v-model="motor.hz" />
+              <label for="hz">Hz</label>
+              <p class="input-hint">Normally 50 or 60</p>
+              <br />
+              <input type="text" name="poles" v-model="motor.poles" />
+              <label for="poles">Poles</label>
+              <p class="input-hint">An even number such as 2 or 4</p>
+            </div>    
+          </div>
+        </div>
+      
+        <div class="type-container">
+          <div class="type-headings">
+            <h5>Power</h5>
+            <select v-model="powerType" @change="powerTypeChanged()">
+              <option value="kw" selected>Kilowatts</option>
+              <option value="w">Watts</option>
+              <option value="voltsamps">Voltage &amp; Amps</option>
+            </select>
+          </div>
+
+          <div class="type-inputs">
+            <div class="kw-input" v-if="powerType == 'kw'">
+              <input type="text" name="kilowatts" v-model="motor.kilowatts" />
+              <label for="kilowatts">kW</label>
+            </div>
+
+            <div class="w-input" v-if="powerType == 'w'">
+              <input type="text" name="watts" v-model="motor.watts" />
+              <label for="watts">W</label>
+            </div>
+
+            <div class="voltsamps-input" v-if="powerType == 'voltsamps'"> 
+              <input type="text" name="volts" v-model="motor.volts" />
+              <label for="volts">Volts</label>
+              <input type="text" name="amps" v-model="motor.amps" />
+              <label for="amps">Amps</label>
+            </div>
+          </div>
+        </div>
 
         <h3>⚙️ Gearing</h3>
-        <label for="ratio">Gear Ratio (n: 1)</label>
-        <input type="text" name="ratio" v-model="gearing.ratio" placeholder="n" />
-        <label for="maxTorque">Maximum Torque (nm)</label>
-        <input type="text" name="maxTorque" v-model="gearing.maxTorque" />
+        <div class="type-container">
+          <div class="type-headings">
+          </div>
+          <div class="type-inputs">
+            <label for="ratio">Gear Ratio (n: 1)</label>
+            <input type="text" name="ratio" v-model="gearing.ratio" placeholder="n" />
+            <label for="maxTorque">Maximum Torque (nm)</label>
+            <input type="text" name="maxTorque" v-model="gearing.maxTorque" />
+          </div>
+        </div>
+
       </section>
   
       <section class="results">
@@ -50,12 +88,18 @@
         <div class="hint-body">
           <p v-if="shredderResultHint == null">Enter more data for a result</p>
           <p v-if="shredderResultHint != null">{{shredderResultHint.body}}</p>
+          <p v-if="gearing.maxTorque != null && gearing.maxTorque > 0 && gearing.maxTorque < shredderTorque">
+            ⚠️ WARNING: Torque exceeds gearbox rating. It may break
+          </p>
         </div>
       </section>
-
     </div>
-    <pre>Will It Shred v1 originally developed for Excel by Andy Noyes</pre>
-    <pre>Transcribed for web by Kyle Newsome</pre>
+    <footer>
+      <p>Picking the right motor for your Precious Plastic Shredder can be tricky</p>
+      <p>Use this calculator to help find out if the motor/gearing combination you are considering will shred within your expectations</p>
+      <pre>Will It Shred v1 originally developed for Excel by Andy Noyes</pre>
+      <pre>Transcribed for web by Kyle Newsome</pre>
+    </footer>
   </div>
 </template>
 
@@ -64,16 +108,16 @@ import Vue from 'vue'
 import { ShredderInputData, RatingResult, getRating } from '../DataStructure'
 
 class MotorData {
-  rpm?: number
+  rpm: number | null = null
 
-  hz?: number
-  poles?: number
+  hz: number | null = null
+  poles: number | null = null
 
-  kilowatts?: number
-  watts?: number
+  kilowatts: number | null = null
+  watts: number | null = null
 
-  volts?: number
-  amps?: number
+  volts: number | null = null
+  amps: number | null = null
 }
 
 class GearingData {
@@ -104,6 +148,8 @@ export default Vue.extend({
   },
   data: function () { 
     return {
+      rpmType: "rpm",
+      powerType: "kw",
       motor: new MotorData(),
       gearing: new GearingData()
     }
@@ -138,6 +184,19 @@ export default Vue.extend({
     }
   },
   methods: {
+    rpmTypeChanged: function () {
+      this.motor.rpm = null
+      this.motor.hz = null
+      this.motor.poles = null
+    },
+
+    powerTypeChanged: function () {
+      this.motor.kilowatts = null
+      this.motor.watts = null
+      this.motor.volts = null
+      this.motor.amps = null
+    },
+
     getComputedMotorRPM: function(): number | null {
       if(this.motor.rpm) {
         return this.motor.rpm
@@ -156,7 +215,7 @@ export default Vue.extend({
         return this.motor.kilowatts * 1000
       }
       else if (this.motor.volts && this.motor.amps) {
-        return this.motor.volts & this.motor.amps * 0.8
+        return this.motor.volts * this.motor.amps * 0.8
       }
       return null
     },
@@ -209,7 +268,7 @@ export default Vue.extend({
 
       switch (this.shredderTorqueRating.value) {
         case 1:
-          hints.push(`The torque is low`)
+          hints.push(`The torque is low.`)
           hintTitle = "Won't shred 😫"
           break
         case 2:
@@ -285,10 +344,6 @@ export default Vue.extend({
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
-div.container {
-  width: 640pt;
-  margin: 0 auto;
-}
 
 div.calculator {
   display: flex;
@@ -303,11 +358,33 @@ section {
   width: 45%;
 }
 
+.type-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: 20pt;
+}
+.type-headings {
+  width: 50%;
+}
+.type-inputs {
+  width: 50%;
+}
+
+h5 {
+  margin: 0 5pt 0 0;
+  float: left;
+}
+
+input {
+  margin-right: 10px;
+  width: 100px;
+  display: block;
+  float: left;
+}
+
 label {
   font-size: 120%;
-  display: block;
-}
-input {
   display: block;
 }
 
