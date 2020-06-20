@@ -14,15 +14,15 @@
           </div>
           <div class="type-inputs">
             <div class="rpm-input" v-if="rpmType == 'rpm'">
-              <input type="text" name="rpm" v-model="motor.rpm" />
+              <input type="number" step="1" name="rpm" v-model="motor.rpm" />
               <label for="rpm">RPM</label>
             </div>
             <div class="hz-poles-input" v-if="rpmType == 'hzpoles'">
-              <input type="text" name="hz" v-model="motor.hz" />
+              <input type="number" step="1" name="hz" v-model="motor.hz" />
               <label for="hz">Hz</label>
               <p class="input-hint">Normally 50 or 60</p>
               <br />
-              <input type="text" name="poles" v-model="motor.poles" />
+              <input type="number" step="2" name="poles" v-model="motor.poles" />
               <label for="poles">Poles</label>
               <p class="input-hint">An even number such as 2 or 4</p>
             </div>    
@@ -41,19 +41,19 @@
 
           <div class="type-inputs">
             <div class="kw-input" v-if="powerType == 'kw'">
-              <input type="text" name="kilowatts" v-model="motor.kilowatts" />
+              <input type="number" step="0.1" name="kilowatts" v-model="motor.kilowatts" />
               <label for="kilowatts">kW</label>
             </div>
 
             <div class="w-input" v-if="powerType == 'w'">
-              <input type="text" name="watts" v-model="motor.watts" />
+              <input type="number" step="1" name="watts" v-model="motor.watts" />
               <label for="watts">W</label>
             </div>
 
             <div class="voltsamps-input" v-if="powerType == 'voltsamps'"> 
-              <input type="text" name="volts" v-model="motor.volts" />
+              <input type="number" step="1" name="volts" v-model="motor.volts" />
               <label for="volts">Volts</label>
-              <input type="text" name="amps" v-model="motor.amps" />
+              <input type="number" step="0.1" name="amps" v-model="motor.amps" />
               <label for="amps">Amps</label>
             </div>
           </div>
@@ -62,12 +62,17 @@
         <h3>⚙️ Gearing</h3>
         <div class="type-container">
           <div class="type-headings">
+            <h5 class="gear-heading">Gear Ratio (n: 1)</h5>
+            <h5 class="gear-heading">Maximum Torque</h5>
           </div>
           <div class="type-inputs">
-            <label for="ratio">Gear Ratio (n: 1)</label>
-            <input type="text" name="ratio" v-model="gearing.ratio" placeholder="n" />
-            <label for="maxTorque">Maximum Torque (nm)</label>
-            <input type="text" name="maxTorque" v-model="gearing.maxTorque" />
+            <div class="ratio-input">
+              <input type="number" step="0.1" name="ratio" v-model="gearing.ratio" placeholder="n" />
+            </div>
+            <div class="max-torque-input">
+              <input type="number" step="0.1" name="maxTorque" v-model="gearing.maxTorque" />
+              <label for="maxTorque">nm</label>
+            </div>
           </div>
         </div>
 
@@ -91,14 +96,18 @@
           <p v-if="gearing.maxTorque != null && gearing.maxTorque > 0 && gearing.maxTorque < shredderTorque">
             ⚠️ WARNING: Torque exceeds gearbox rating. It may break
           </p>
+          <p v-if="shredderResultHint != null">
+            <a class="share-button" :href="shareResultsUrl">✉ Share these results</a>
+          </p>
         </div>
       </section>
     </div>
     <footer>
       <p>Picking the right motor for your Precious Plastic Shredder can be tricky</p>
       <p>Use this calculator to help find out if the motor/gearing combination you are considering will shred within your expectations</p>
-      <pre>Will It Shred v1 originally developed for Excel by Andy Noyes</pre>
-      <pre>Transcribed for web by Kyle Newsome</pre>
+      <p class="credit">Will It Shred originally developed in Excel <a href="https://davehakkens.nl/community/forums/topic/will-it-shred/" target="_blank">by Andy Noyes</a></p>
+      <p class="credit">Transcribed for web by <a href="https://twitter.com/kylnew" target="_blank">Kyle Newsome</a></p>
+      <p class="credit"><a href="https://github.com/bitwit/will-it-shred-web" target="_blank">Contribute on Github</a></p>
     </footer>
   </div>
 </template>
@@ -126,6 +135,13 @@ class GearingData {
   efficiency: number = 0.75
 }
 
+interface JSONDataInput {
+  rpm?: number
+  kilowatts?: number
+  gearRatio?: number
+  maxTorque?: number
+}
+
 class Hint {
   title: string
   body: string
@@ -144,6 +160,24 @@ export default Vue.extend({
     inputData: Object
   },
   created: function () {
+    let params = new URLSearchParams(window.location.search);
+      let jsonInput = params.get("jsonInput")
+      if (jsonInput) {
+        let parsedJSON = JSON.parse(jsonInput) as JSONDataInput;
+        console.log(parsedJSON);
+        if(parsedJSON.rpm) {
+          this.motor.rpm = parsedJSON.rpm
+        }
+        if(parsedJSON.kilowatts) {
+          this.motor.kilowatts = parsedJSON.kilowatts
+        }
+        if(parsedJSON.gearRatio) {
+          this.gearing.ratio = parsedJSON.gearRatio
+        }
+        if(parsedJSON.maxTorque) {
+          this.gearing.maxTorque = parsedJSON.maxTorque
+        }
+      }
     console.log("Calculator created", this.shredderInputData)
   },
   data: function () { 
@@ -181,7 +215,17 @@ export default Vue.extend({
     },
     shredderResultHint: function(): Hint | null {
       return this.getShredderHint();
-    }
+    },
+    shareResultsUrl: function() {
+      let data = {
+        rpm: this.getComputedMotorRPM(),
+        kilowatts: (this.getComputedMotorWatts()! / 1000),
+        gearRatio: this.gearing.ratio,
+        maxTorque: this.gearing.maxTorque
+      }
+      let encodedData = encodeURIComponent(JSON.stringify(data))
+      return `${window.location.origin}/?jsonInput=${encodedData}`
+    },
   },
   methods: {
     rpmTypeChanged: function () {
@@ -371,6 +415,15 @@ section {
   width: 50%;
 }
 
+.gear-heading:nth-child(2) {
+  margin-top: 40px;
+}
+
+.max-torque-input {
+  padding-top: 20px;
+  clear: both;
+}
+
 h5 {
   margin: 0 5pt 0 0;
   float: left;
@@ -381,6 +434,7 @@ input {
   width: 100px;
   display: block;
   float: left;
+  font-size: 150%;
 }
 
 label {
@@ -409,7 +463,19 @@ dd {
   font-size: 130%;
 }
 
-pre {
+p.credit {
+  font-size: 80%;
   text-align: center;
+  margin: 0;
+}
+
+@media only screen and (max-width: 639px) {
+  div.calculator {
+    flex-direction: column;
+  }
+
+  section {
+    width: 98%;
+  }
 }
 </style>

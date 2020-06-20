@@ -35,11 +35,11 @@ export default Vue.extend({
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 0px;
 }
 
 div.container {
-  width: 640pt;
+  width: 800px;
   margin: 0 auto;
 }
 
@@ -51,6 +51,20 @@ h1 {
 }
 img.logo {
   display: block;
-  width: 100pt;
+  width: 100px;
+  margin-right: 10px;
+}
+@media only screen and (max-width: 639px) {
+  #app {
+    margin-top: 20px;
+  }
+  img.logo {
+    display: block;
+    width: 50px;
+  }
+  div.container {
+    width: 100%;
+    margin: 0 auto;
+  }
 }
 </style>
